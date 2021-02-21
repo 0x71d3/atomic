@@ -1,0 +1,6 @@
+__pycache__/
+
+atomic_data.tgz
+atomic_data/
+
+*.csv
