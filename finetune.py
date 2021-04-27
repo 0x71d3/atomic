@@ -23,7 +23,7 @@ tokens = [
 ]
 
 
-def read_comet_split(split_path):
+def read_atomic_split(split_path):
     texts = []
     labels = []
 
@@ -53,9 +53,9 @@ class AtomicDataset(torch.utils.data.Dataset):
 
 
 def main(args):
-    train_texts, train_labels = read_comet_split(f'{args.data_dir}/v4_atomic_trn.csv')
-    val_texts, val_labels = read_comet_split(f'{args.data_dir}/v4_atomic_dev.csv')
-    # test_texts, test_labels = read_comet_split(f'{args.data_dir}/v4_atomic_tst.csv')
+    train_texts, train_labels = read_atomic_split(f'{args.data_dir}/v4_atomic_trn.csv')
+    val_texts, val_labels = read_atomic_split(f'{args.data_dir}/v4_atomic_dev.csv')
+    # test_texts, test_labels = read_atomic_split(f'{args.data_dir}/v4_atomic_tst.csv')
 
     tokenizer = BartTokenizer.from_pretrained(args.pretrained_model_name_or_path)
     num_added_toks = tokenizer.add_tokens(tokens)
@@ -73,16 +73,17 @@ def main(args):
 
     training_args = TrainingArguments(
         output_dir=f'./results/{args.output_dir}',
-        per_device_train_batch_size=32,
-        per_device_eval_batch_size=32,
-        gradient_accumulation_steps=1,
+        per_device_train_batch_size=args.per_device_batch_size,
+        per_device_eval_batch_size=args.per_device_batch_size,
+        gradient_accumulation_steps=4,
         learning_rate=3e-5,
         weight_decay=0.01,
         max_grad_norm=0.1,
         num_train_epochs=1,
         warmup_steps=500,
         logging_dir=f'./logs/{args.output_dir}',
-        evaluation_strategy='epoch'
+        evaluation_strategy='epoch',
+        load_best_model_at_end=True,
     )
 
     trainer = Trainer(
@@ -90,6 +91,7 @@ def main(args):
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=val_dataset,
+        tokenizer=tokenizer,
     )
 
     trainer.train()
@@ -102,7 +104,9 @@ if __name__ == '__main__':
 
     parser.add_argument('--data_dir', default='atomic_data')
     parser.add_argument('--output_dir', default='comet_large')
+
     parser.add_argument('--pretrained_model_name_or_path', default='facebook/bart-large')
+    parser.add_argument('--per_device_batch_size', default=2, type=int)
 
     args = parser.parse_args()
 
