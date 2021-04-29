@@ -2,8 +2,13 @@ __pycache__/
 
 atomic_data/
 
+data/
+
 *.sh
 *.o*
 
 results/
 logs/
+
+comet_*/
+comet_*_preds.txt
